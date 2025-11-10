@@ -1,0 +1,17 @@
+{
+  "name": "webrtc-p2p-app",
+  "version": "1.0.0",
+  "description": "A minimal WebRTC P2P video chat application.",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "signaling-server.js",
+  "scripts": {
+    "start": "node signaling-server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "selfsigned": "^4.0.0",
+    "ws": "^8.14.2"
+  }
+}
