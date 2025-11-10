@@ -1,9 +1,9 @@
 {
-  "name": "webrtc-p2p-app",
+  "name": "wave-connect",
   "version": "1.0.0",
-  "description": "A minimal WebRTC P2P video chat application.",
+  "description": "Wave-Connect - A modern WebRTC P2P video & audio call application with real-time audio visualization.",
   "license": "ISC",
-  "author": "",
+  "author": "Santosh Maurya",
   "type": "commonjs",
   "main": "signaling-server.js",
   "scripts": {
