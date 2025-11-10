@@ -4,21 +4,34 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
+const http = require("http");
 
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const PING_INTERVAL = 30000; // 30 seconds - keep connections alive
 const app = express();
+
+// Serve logo from root directory (must be before static middleware)
+app.get("/logo.png", (req, res) => {
+  res.sendFile(path.join(__dirname, "logo.png"));
+});
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, "public")));
 
-// Read SSL certificate and key
-const privateKey = fs.readFileSync("key.pem", "utf8");
-const certificate = fs.readFileSync("cert.pem", "utf8");
-const credentials = { key: privateKey, cert: certificate };
+// Create server (HTTPS for local, HTTP for production - Render handles SSL)
+let server;
+if (IS_PRODUCTION) {
+  // Production: Use HTTP (Render provides SSL termination)
+  server = http.createServer(app);
+} else {
+  // Development: Use HTTPS with self-signed certificates
+  const privateKey = fs.readFileSync("key.pem", "utf8");
+  const certificate = fs.readFileSync("cert.pem", "utf8");
+  const credentials = { key: privateKey, cert: certificate };
+  server = https.createServer(credentials, app);
+}
 
-// Create HTTPS server and attach WebSocket server to it
-const server = https.createServer(credentials, app);
 const wss = new WebSocket.Server({ server });
 
 const rooms = {}; // Store room information
@@ -39,13 +52,18 @@ function getLocalIP() {
 
 const localIP = getLocalIP();
 server.listen(PORT, () => {
-  console.log(`Server running at https://${localIP}:${PORT}`);
-  console.log(`Local access: https://localhost:${PORT}`);
-  console.log(`WebSocket server running on wss://${localIP}:${PORT}`);
-  console.log(`Local WebSocket access: wss://localhost:${PORT}`);
-  console.log("\n⚠️  Note: You may see a security warning in your browser.");
-  console.log("   This is normal for self-signed certificates.");
-  console.log('   Click "Advanced" and "Proceed" to continue.');
+  if (IS_PRODUCTION) {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`✅ Production mode - SSL handled by Render`);
+  } else {
+    console.log(`Server running at https://${localIP}:${PORT}`);
+    console.log(`Local access: https://localhost:${PORT}`);
+    console.log(`WebSocket server running on wss://${localIP}:${PORT}`);
+    console.log(`Local WebSocket access: wss://localhost:${PORT}`);
+    console.log("\n⚠️  Note: You may see a security warning in your browser.");
+    console.log("   This is normal for self-signed certificates.");
+    console.log('   Click "Advanced" and "Proceed" to continue.');
+  }
 });
 
 wss.on("connection", (ws) => {

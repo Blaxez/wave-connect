@@ -6,8 +6,11 @@
   "author": "Santosh Maurya",
   "type": "commonjs",
   "main": "signaling-server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
-    "start": "node signaling-server.js",
+    "start": "NODE_ENV=production node signaling-server.js",
     "dev": "node signaling-server.js",
     "vercel-build": "echo 'Build complete'"
   },
