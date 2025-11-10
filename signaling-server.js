@@ -19,6 +19,11 @@ app.get("/logo.png", (req, res) => {
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, "public")));
 
+// Health check endpoint for Render
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
+
 // Create server (HTTPS for local, HTTP for production - Render handles SSL)
 let server;
 if (IS_PRODUCTION) {
@@ -32,7 +37,13 @@ if (IS_PRODUCTION) {
   server = https.createServer(credentials, app);
 }
 
-const wss = new WebSocket.Server({ server });
+// Create WebSocket server with proper configuration
+const wss = new WebSocket.Server({
+  server,
+  path: "/",
+  perMessageDeflate: false,
+  clientTracking: true,
+});
 
 const rooms = {}; // Store room information
 
@@ -51,10 +62,11 @@ function getLocalIP() {
 }
 
 const localIP = getLocalIP();
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   if (IS_PRODUCTION) {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`✅ Production mode - SSL handled by Render`);
+    console.log(`📡 WebSocket server ready at wss://wave-connect.onrender.com`);
   } else {
     console.log(`Server running at https://${localIP}:${PORT}`);
     console.log(`Local access: https://localhost:${PORT}`);
@@ -64,6 +76,15 @@ server.listen(PORT, () => {
     console.log("   This is normal for self-signed certificates.");
     console.log('   Click "Advanced" and "Proceed" to continue.');
   }
+});
+
+// WebSocket server event handlers
+wss.on("error", (error) => {
+  console.error("WebSocket Server Error:", error);
+});
+
+wss.on("listening", () => {
+  console.log("✅ WebSocket server is listening for connections");
 });
 
 wss.on("connection", (ws) => {
