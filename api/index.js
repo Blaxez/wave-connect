@@ -1,101 +1,139 @@
-const express = require("express");
-const path = require("path");
+// Vercel Serverless Function for Wave-Connect Signaling
+// This uses HTTP polling instead of WebSocket due to Vercel limitations
 
-const app = express();
-
-// Middleware
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
-
-// In-memory storage for rooms (Note: This resets on each serverless invocation)
-// For production, use a database like Redis or Supabase
+// In-memory storage (Note: Resets on cold starts - use Redis for production)
 const rooms = new Map();
 
-// Helper function to generate room ID
+// Helper to generate room ID
 function generateRoomId() {
   return Math.random().toString(36).substring(2, 7).toUpperCase();
 }
 
-// API Routes for signaling (HTTP-based fallback)
-app.post("/api/create-room", (req, res) => {
-  const { username } = req.body;
-  const roomId = generateRoomId();
-
-  rooms.set(roomId, {
-    creator: { username: username || "Anonymous", callType: null },
-    peer: null,
-    messages: [],
-  });
-
-  res.json({ type: "room_created", roomId });
-});
-
-app.post("/api/join-room", (req, res) => {
-  const { roomId, username } = req.body;
-  const room = rooms.get(roomId);
-
-  if (!room) {
-    return res.status(404).json({ type: "error", error: "Room not found" });
+// Clean rooms older than 1 hour
+function cleanOldRooms() {
+  const oneHourAgo = Date.now() - 3600000;
+  for (const [roomId, room] of rooms.entries()) {
+    if (room.lastActivity < oneHourAgo) {
+      rooms.delete(roomId);
+    }
   }
-
-  if (room.peer) {
-    return res.status(403).json({ type: "room_full" });
-  }
-
-  room.peer = { username: username || "Anonymous" };
-
-  res.json({
-    type: "room_joined",
-    roomId,
-    callType: room.creator.callType,
-    peerUsername: room.creator.username,
-  });
-});
-
-app.post("/api/signal", (req, res) => {
-  const { roomId, signal } = req.body;
-  const room = rooms.get(roomId);
-
-  if (!room) {
-    return res.status(404).json({ type: "error", error: "Room not found" });
-  }
-
-  // Store the signal message
-  room.messages.push(signal);
-
-  res.json({ success: true });
-});
-
-app.get("/api/poll/:roomId", (req, res) => {
-  const { roomId } = req.params;
-  const room = rooms.get(roomId);
-
-  if (!room) {
-    return res.status(404).json({ type: "error", error: "Room not found" });
-  }
-
-  // Return pending messages and clear them
-  const messages = [...room.messages];
-  room.messages = [];
-
-  res.json({ messages });
-});
-
-// Serve index.html for all other routes
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// Export for Vercel serverless
-module.exports = app;
-
-// Local development server
-if (require.main === module) {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(
-      `🚀 Wave-Connect HTTP server running on http://localhost:${PORT}`
-    );
-    console.log(`📡 Using HTTP polling for signaling (Vercel-compatible)`);
-  });
 }
+
+// Main Vercel serverless handler
+module.exports = async (req, res) => {
+  // CORS headers
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  const { method, url } = req;
+  const path = url.split("?")[0];
+
+  try {
+    // Periodic cleanup
+    if (Math.random() < 0.1) cleanOldRooms();
+
+    // POST /api/create-room
+    if (method === "POST" && path === "/api/create-room") {
+      const { username } = req.body;
+      const roomId = generateRoomId();
+
+      rooms.set(roomId, {
+        creator: { username: username || "Anonymous", callType: null },
+        peer: null,
+        messages: [],
+        lastActivity: Date.now(),
+      });
+
+      return res.status(200).json({ type: "room_created", roomId });
+    }
+
+    // POST /api/join-room
+    if (method === "POST" && path === "/api/join-room") {
+      const { roomId, username } = req.body;
+      const room = rooms.get(roomId);
+
+      if (!room) {
+        return res.status(404).json({ type: "error", error: "Room not found" });
+      }
+
+      if (room.peer) {
+        return res.status(403).json({ type: "room_full" });
+      }
+
+      room.peer = { username: username || "Anonymous" };
+      room.lastActivity = Date.now();
+
+      // Notify creator
+      room.messages.push({
+        type: "peer_joined",
+        username: username,
+      });
+
+      return res.status(200).json({
+        type: "room_joined",
+        roomId,
+        callType: room.creator.callType,
+        peerUsername: room.creator.username,
+      });
+    }
+
+    // POST /api/signal
+    if (method === "POST" && path === "/api/signal") {
+      const { roomId, signal } = req.body;
+      const room = rooms.get(roomId);
+
+      if (!room) {
+        return res.status(404).json({ type: "error", error: "Room not found" });
+      }
+
+      room.messages.push(signal);
+      room.lastActivity = Date.now();
+
+      // Update call type if selected
+      if (signal.type === "call_type_selected") {
+        room.creator.callType = signal.callType;
+      }
+
+      return res.status(200).json({ success: true });
+    }
+
+    // GET /api/poll/:roomId
+    if (method === "GET" && path.startsWith("/api/poll/")) {
+      const roomId = path.split("/").pop();
+      const room = rooms.get(roomId);
+
+      if (!room) {
+        return res.status(404).json({ type: "error", error: "Room not found" });
+      }
+
+      const messages = [...room.messages];
+      room.messages = [];
+      room.lastActivity = Date.now();
+
+      return res.status(200).json({ messages });
+    }
+
+    // POST /api/leave-room
+    if (method === "POST" && path === "/api/leave-room") {
+      const { roomId } = req.body;
+      const room = rooms.get(roomId);
+
+      if (room) {
+        room.messages.push({ type: "peer_left" });
+        setTimeout(() => rooms.delete(roomId), 5000);
+      }
+
+      return res.status(200).json({ success: true });
+    }
+
+    return res.status(404).json({ error: "Not found" });
+  } catch (error) {
+    console.error("API Error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};

@@ -9,7 +9,7 @@
     />
     <meta name="author" content="Santosh Maurya" />
     <title>Wave-Connect - P2P Video & Audio Calls</title>
-    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="icon" type="image/png" href="{{ site.baseurl }}/logo.png" />
     <style>
       * {
         margin: 0;
@@ -1073,7 +1073,11 @@
 
     <div class="app-container">
       <div class="welcome-screen" id="welcome-screen">
-        <img src="/logo.png" alt="Wave-Connect Logo" class="app-logo" />
+        <img
+          src="{{ site.baseurl }}/logo.png"
+          alt="Wave-Connect Logo"
+          class="app-logo"
+        />
         <h1 class="app-title">Wave-Connect</h1>
         <p class="app-subtitle">Connect with anyone, anywhere</p>
 
@@ -1282,7 +1286,7 @@
       </div>
     </div>
 
-    <script src="client.js"></script>
+    <script src="{{ site.baseurl }}/client.js"></script>
     <!-- <script>
     // Theme toggle functionality
     const themeToggle = document.getElementById('theme-toggle');

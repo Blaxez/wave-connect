@@ -1,3 +1,17 @@
+// API Configuration for Vercel Backend
+const API_CONFIG = {
+  local: "http://localhost:3000",
+  production: "https://your-vercel-app.vercel.app", // UPDATE THIS after deploying to Vercel
+};
+
+const isLocal =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1";
+const API_BASE = isLocal ? API_CONFIG.local : API_CONFIG.production;
+
+let pollingInterval = null;
+const POLL_INTERVAL = 1000; // Poll every 1 second
+
 // UI Elements - New design
 const welcomeScreen = document.getElementById("welcome-screen");
 const callScreen = document.getElementById("call-screen");
@@ -75,6 +89,93 @@ const stunServers = {
   bundlePolicy: "max-bundle",
   rtcpMuxPolicy: "require",
 };
+
+// HTTP API functions (replacing WebSocket)
+async function createRoomAPI() {
+  try {
+    const response = await fetch(`${API_BASE}/api/create-room`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username }),
+    });
+    const data = await response.json();
+    handleAPIMessage(data);
+    startPolling();
+  } catch (error) {
+    console.error("Error creating room:", error);
+    updateStatus("Failed to create room. Please try again.");
+  }
+}
+
+async function joinRoomAPI(roomCode) {
+  try {
+    const response = await fetch(`${API_BASE}/api/join-room`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roomId: roomCode, username }),
+    });
+    const data = await response.json();
+
+    if (data.type === "error" || data.type === "room_full") {
+      updateStatus(data.error || "Room is full");
+      return;
+    }
+
+    handleAPIMessage(data);
+    startPolling();
+  } catch (error) {
+    console.error("Error joining room:", error);
+    updateStatus("Failed to join room. Check the code.");
+  }
+}
+
+async function sendSignalAPI(signal) {
+  try {
+    await fetch(`${API_BASE}/api/signal`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roomId, signal }),
+    });
+  } catch (error) {
+    console.error("Error sending signal:", error);
+  }
+}
+
+function startPolling() {
+  if (pollingInterval) return;
+
+  pollingInterval = setInterval(async () => {
+    if (!roomId) {
+      stopPolling();
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/api/poll/${roomId}`);
+      const data = await response.json();
+
+      if (data.messages && data.messages.length > 0) {
+        data.messages.forEach((msg) => handleAPIMessage(msg));
+      }
+    } catch (error) {
+      console.error("Polling error:", error);
+    }
+  }, POLL_INTERVAL);
+}
+
+function stopPolling() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+}
+
+async function handleAPIMessage(message) {
+  console.log("Received message:", message);
+  // This will handle all the message types like the old ws.onmessage
+  // We'll keep the existing switch logic but call it from here
+  await processMessage(message);
+}
 
 function connectWebSocket() {
   // Smart WebSocket URL configuration

@@ -1,0 +1,27 @@
+# Jekyll Configuration for Wave-Connect
+title: Wave-Connect
+description: Modern P2P video & audio calls with real-time audio visualization
+baseurl: "/wave-connect"
+url: "https://blaxez.github.io"
+
+# Build settings
+theme: null
+plugins: []
+
+# Exclude files from Jekyll build
+exclude:
+  - node_modules/
+  - package.json
+  - package-lock.json
+  - vercel.json
+  - signaling-server.js
+  - generate-cert.js
+  - api/
+  - .gitignore
+  - .git/
+  - .github/
+  - README.md
+
+# Include files that start with underscore or dot
+include:
+  - .nojekyll
