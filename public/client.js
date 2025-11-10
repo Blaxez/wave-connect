@@ -77,9 +77,20 @@ const stunServers = {
 };
 
 function connectWebSocket() {
-  // Use current hostname to work with both localhost and local network IP
+  // Auto-detect WebSocket URL based on environment
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const wsUrl = `${protocol}//${window.location.hostname}:8080`;
+  
+  // For production (Render/deployed), use the same host without port
+  // For local development, use port 8080
+  let wsUrl;
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.match(/^192\.168\./)) {
+    // Local development - use port 8080
+    wsUrl = `${protocol}//${window.location.hostname}:8080`;
+  } else {
+    // Production - use same host and port as the webpage
+    wsUrl = `${protocol}//${window.location.host}`;
+  }
+  
   console.log("Connecting to WebSocket server at:", wsUrl);
   ws = new WebSocket(wsUrl);
 
