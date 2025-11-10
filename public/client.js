@@ -1118,6 +1118,10 @@ function showCallUI() {
   callTypeSelection.classList.add("hidden");
   callScreen.classList.add("active");
 
+  // Hide GitHub button during call
+  const githubBtn = document.getElementById("github-btn");
+  if (githubBtn) githubBtn.classList.add("hidden");
+
   const hasVideo = localStream.getVideoTracks().length > 0;
 
   // Disable/enable camera controls based on call type
@@ -1170,6 +1174,10 @@ function showSessionUI() {
   isCaller = false;
   roomId = null;
   peerUsername = "";
+
+  // Show GitHub button when back to welcome screen
+  const githubBtn = document.getElementById("github-btn");
+  if (githubBtn) githubBtn.classList.remove("hidden");
 
   // Reset peer info
   peerNameElement.textContent = "Connecting...";

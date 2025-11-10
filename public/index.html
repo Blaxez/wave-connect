@@ -143,7 +143,7 @@
       /* GitHub Support Button */
       .github-btn {
         position: fixed;
-        top: 20px;
+        bottom: 20px;
         left: 20px;
         padding: 10px 18px;
         background: var(--glass-bg);
@@ -162,6 +162,13 @@
         color: var(--text-primary);
         font-size: 14px;
         font-weight: 500;
+      }
+
+      /* Hide GitHub button when in call */
+      .github-btn.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(20px);
       }
 
       .github-btn:hover {
@@ -911,7 +918,7 @@
         }
 
         .github-btn {
-          top: 16px;
+          bottom: 16px;
           left: 16px;
           padding: 8px 12px;
           font-size: 12px;
@@ -1043,6 +1050,7 @@
       target="_blank"
       rel="noopener noreferrer"
       class="github-btn"
+      id="github-btn"
       title="Star & Support on GitHub"
     >
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
