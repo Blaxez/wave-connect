@@ -70,6 +70,22 @@ const stunServers = {
         "stun:stun4.l.google.com:19302",
       ],
     },
+    {
+      // Free TURN server fallback for better connectivity
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
   ],
   iceCandidatePoolSize: 10,
   bundlePolicy: "max-bundle",
@@ -79,18 +95,22 @@ const stunServers = {
 function connectWebSocket() {
   // Auto-detect WebSocket URL based on environment
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  
+
   // For production (Render/deployed), use the same host without port
   // For local development, use port 8080
   let wsUrl;
-  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.match(/^192\.168\./)) {
+  if (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname.match(/^192\.168\./)
+  ) {
     // Local development - use port 8080
     wsUrl = `${protocol}//${window.location.hostname}:8080`;
   } else {
     // Production - use same host and port as the webpage
     wsUrl = `${protocol}//${window.location.host}`;
   }
-  
+
   console.log("Connecting to WebSocket server at:", wsUrl);
   ws = new WebSocket(wsUrl);
 
@@ -691,16 +711,28 @@ async function createPeerConnection() {
         updateStatus("Disconnected. Trying to reconnect...");
         callStatusElement.textContent = "Reconnecting...";
         console.warn("Connection disconnected, attempting to reconnect...");
+        // Don't hang up immediately - give it time to reconnect
         break;
       case "closed":
         updateStatus("Connection closed");
         callStatusElement.textContent = "Call ended";
         break;
       case "failed":
-        updateStatus("Connection failed. Please try again.");
+        updateStatus("Connection failed. Check your network and try again.");
         callStatusElement.textContent = "Connection failed";
-        console.error("Connection failed. Cleaning up...");
-        hangUp();
+        console.error(
+          "Connection failed. This may be due to firewall/NAT restrictions."
+        );
+        console.error("Please check:");
+        console.error("1. Both users have stable internet connection");
+        console.error("2. Firewall is not blocking WebRTC");
+        console.error("3. Try using a different network");
+        // Give user option to retry instead of auto-hangup
+        setTimeout(() => {
+          if (confirm("Connection failed. Would you like to end the call?")) {
+            hangUp();
+          }
+        }, 2000);
         break;
     }
   };
