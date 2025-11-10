@@ -7,7 +7,9 @@
   "type": "commonjs",
   "main": "signaling-server.js",
   "scripts": {
-    "start": "node signaling-server.js"
+    "start": "node signaling-server.js",
+    "dev": "node signaling-server.js",
+    "vercel-build": "echo 'Build complete'"
   },
   "dependencies": {
     "express": "^5.1.0",

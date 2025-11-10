@@ -34,6 +34,7 @@
 ## ✨ Features
 
 ### 🎥 **Video & Audio Calls**
+
 - High-quality peer-to-peer video calling
 - Audio-only call mode with visual feedback
 - Automatic call type synchronization between peers
@@ -41,6 +42,7 @@
 - Screen sharing support
 
 ### 🎵 **Real-Time Audio Visualization**
+
 - FFT-based audio spectrum analyzer
 - Pulsing rings around avatars during voice activity
 - EQ-style vertical bars reacting to voice input
@@ -48,6 +50,7 @@
 - Theme-adaptive visualizers (white/black for light, silver/black for dark)
 
 ### 🎨 **Modern UI/UX**
+
 - Glassmorphic design with backdrop blur
 - Monochromatic color scheme (white & black)
 - Smooth animations and transitions
@@ -55,6 +58,7 @@
 - Mobile-optimized interface
 
 ### 🔧 **Technical Features**
+
 - WebRTC P2P connections
 - WebSocket-based signaling server
 - HTTPS/WSS secure connections
@@ -76,31 +80,36 @@
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/Blaxez/wave-connect.git
    cd wave-connect
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Generate SSL certificates** (required for WebRTC)
+
    ```bash
    node generate-cert.js
    ```
 
 4. **Start the server**
+
    ```bash
    npm start
    ```
 
 5. **Open your browser**
+
    ```
    https://localhost:8080
    ```
-   
+
    ⚠️ **Note**: Accept the self-signed certificate warning in your browser
 
 ---
@@ -136,7 +145,7 @@ sequenceDiagram
     participant A as User A
     participant S as Signaling Server
     participant B as User B
-    
+
     A->>S: Create Room
     S->>A: Room Code
     B->>S: Join Room (code)
@@ -189,13 +198,13 @@ Wave-Connect uses the **Web Audio API** for real-time audio analysis:
 
 ### Call Controls
 
-| Button | Function |
-|--------|----------|
-| 🎤 | Toggle microphone on/off |
-| 📹 | Toggle camera on/off (video calls only) |
-| 🖥️ | Share/stop screen sharing |
-| 🔄 | Switch camera (mobile) |
-| ❌ | End call |
+| Button | Function                                |
+| ------ | --------------------------------------- |
+| 🎤     | Toggle microphone on/off                |
+| 📹     | Toggle camera on/off (video calls only) |
+| 🖥️     | Share/stop screen sharing               |
+| 🔄     | Switch camera (mobile)                  |
+| ❌     | End call                                |
 
 ---
 
@@ -207,9 +216,7 @@ The default STUN server is Google's public server. You can modify it in `client.
 
 ```javascript
 const config = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" }
-  ]
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 ```
 
@@ -248,21 +255,21 @@ Edit CSS variables in `index.html`:
 Customize in `client.js`:
 
 ```javascript
-localAnalyser.fftSize = 256;  // FFT size
-localAnalyser.smoothingTimeConstant = 0.8;  // Smoothing
+localAnalyser.fftSize = 256; // FFT size
+localAnalyser.smoothingTimeConstant = 0.8; // Smoothing
 ```
 
 ---
 
 ## 🌐 Browser Support
 
-| Browser | Support |
-|---------|---------|
+| Browser                | Support         |
+| ---------------------- | --------------- |
 | Chrome/Edge (Chromium) | ✅ Full Support |
-| Firefox | ✅ Full Support |
-| Safari | ✅ Full Support |
-| Opera | ✅ Full Support |
-| Mobile Browsers | ✅ Full Support |
+| Firefox                | ✅ Full Support |
+| Safari                 | ✅ Full Support |
+| Opera                  | ✅ Full Support |
+| Mobile Browsers        | ✅ Full Support |
 
 ---
 
