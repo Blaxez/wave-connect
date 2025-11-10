@@ -77,9 +77,23 @@ const stunServers = {
 };
 
 function connectWebSocket() {
-  // Use current hostname to work with both localhost and local network IP
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const wsUrl = `${protocol}//${window.location.hostname}:8080`;
+  // Smart WebSocket URL configuration
+  // For GitHub Pages: Use Railway/Render backend
+  // For localhost: Use local WebSocket server
+  const isLocalhost =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+
+  let wsUrl;
+  if (isLocalhost) {
+    // Local development
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    wsUrl = `${protocol}//${window.location.hostname}:8080`;
+  } else {
+    // Production: Change this to your Railway/Render backend URL
+    wsUrl = "wss://wave-connect-production.up.railway.app"; // Update after deploying to Railway
+  }
+
   console.log("Connecting to WebSocket server at:", wsUrl);
   ws = new WebSocket(wsUrl);
 
