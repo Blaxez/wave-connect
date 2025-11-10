@@ -10,7 +10,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "NODE_ENV=production node signaling-server.js",
+    "start": "node signaling-server.js",
     "dev": "node signaling-server.js",
     "vercel-build": "echo 'Build complete'"
   },
